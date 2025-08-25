@@ -3,7 +3,8 @@ import { validatePair } from "../utils/helpers.js";
 export const setupWebSocket = (wss, binanceService) => {
   wss.on("connection", (ws, req) => {
     const clientId = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-    console.log(`🔗 New WebSocket client connected from ${clientId}`);
+    console.log(`New WebSocket client connected from ${clientId}`);
+    // console.log("New connection established.");
 
     const subscriptions = new Set();
     let isAlive = true;
@@ -11,11 +12,13 @@ export const setupWebSocket = (wss, binanceService) => {
     // Setup heartbeat
     const heartbeat = setInterval(() => {
       if (!isAlive) {
-        console.log(`💔 Client ${clientId} disconnected (heartbeat timeout)`);
+        console.log(`Client ${clientId} disconnected (heartbeat timeout)`);
+        // console.log("Client did not respond to ping, terminating.");
         return ws.terminate();
       }
       isAlive = false;
       ws.ping();
+      // console.log('Ping sent to ' + clientId);
     }, 30000);
 
     ws.on("pong", () => {
@@ -25,6 +28,9 @@ export const setupWebSocket = (wss, binanceService) => {
     ws.on("message", (message) => {
       try {
         const data = JSON.parse(message);
+        // console.log("*****************");
+        // console.log("Received a message from client.");
+        // console.log(data);
         handleClientMessage(ws, data, subscriptions, binanceService);
       } catch (error) {
         console.error("Failed to process WebSocket message:", error);
@@ -52,9 +58,10 @@ export const setupWebSocket = (wss, binanceService) => {
     binanceService.on("medianUpdate", handleUpdate);
 
     ws.on("close", () => {
-      console.log(`👋 WebSocket client ${clientId} disconnected`);
+      console.log(`ebSocket client ${clientId} disconnected`);
       clearInterval(heartbeat);
       binanceService.removeListener("medianUpdate", handleUpdate);
+      // console.log("Removed listener for " + clientId);
     });
 
     // Send welcome message with available pairs
@@ -103,7 +110,9 @@ const handleClientMessage = (ws, data, subscriptions, binanceService) => {
 };
 
 const handleSubscribe = (ws, pair, subscriptions, binanceService) => {
+  // console.log("Attempting to subscribe to pair: " + pair);
   if (!validatePair(pair)) {
+    // console.log("Failed due to invalid pair format.");
     ws.send(
       JSON.stringify({
         type: "error",
@@ -114,8 +123,10 @@ const handleSubscribe = (ws, pair, subscriptions, binanceService) => {
   }
 
   const normalizedPair = pair.toLowerCase();
+  // console.log("Checking if " + normalizedPair + " is available.");
 
   if (!binanceService.getActivePairs().includes(normalizedPair)) {
+    // console.log("Pair not available.");
     ws.send(
       JSON.stringify({
         type: "error",
@@ -147,7 +158,7 @@ const handleSubscribe = (ws, pair, subscriptions, binanceService) => {
     })
   );
 
-  console.log(`📊 Client subscribed to ${normalizedPair}`);
+  console.log(`Client subscribed to ${normalizedPair}`);
 };
 
 const handleUnsubscribe = (ws, pair, subscriptions) => {
@@ -172,7 +183,7 @@ const handleUnsubscribe = (ws, pair, subscriptions) => {
     })
   );
 
-  console.log(`📉 Client unsubscribed from ${normalizedPair}`);
+  console.log(`Client unsubscribed from ${normalizedPair}`);
 };
 
 const handleGetMedian = (ws, pair, binanceService) => {
@@ -217,3 +228,4 @@ const handleGetAllMedians = (ws, binanceService) => {
     })
   );
 };
+

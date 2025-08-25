@@ -4,10 +4,12 @@ import { validatePair } from "../utils/helpers.js";
 const createMedianRoutes = (binanceService) => {
   const router = Router();
 
-  // Get median for specific pair
+  // Get median for a specific trading pair.
   router.get("/:pair", (req, res) => {
     const { pair } = req.params;
+    // console.log(`Requested pair: ${pair}`); 
 
+    // chking pairsss
     if (!validatePair(pair)) {
       return res.status(400).json({
         error: "Invalid pair format",
@@ -31,9 +33,10 @@ const createMedianRoutes = (binanceService) => {
     });
   });
 
-  // Get all medians
+  // Get all medians.
   router.get("/", (req, res) => {
     const medians = binanceService.getAllMedians();
+    // Saaray pairs ka median 
 
     res.json({
       success: true,
@@ -42,7 +45,7 @@ const createMedianRoutes = (binanceService) => {
     });
   });
 
-  // Get statistics for all pairs
+  // Get statistics for all pairs.
   router.get("/stats/all", (req, res) => {
     const pairs = binanceService.getActivePairs();
     const stats = pairs.map((pair) => {

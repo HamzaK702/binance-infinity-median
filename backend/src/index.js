@@ -66,12 +66,12 @@ const start = async () => {
     await binanceService.initialize();
 
     server.listen(ENV.PORT, () => {
-      console.log(`🚀 Server running on port ${ENV.PORT}`);
-      console.log(`📡 WebSocket server ready on ws://localhost:${ENV.PORT}`);
-      console.log(`🌍 Environment: ${ENV.NODE_ENV}`);
+      console.log(` Server running on port ${ENV.PORT}`);
+      console.log(`WebSocket server ready on ws://localhost:${ENV.PORT}`);
+      console.log(` Environment: ${ENV.NODE_ENV}`);
     });
   } catch (error) {
-    console.error("❌ Failed to start server:", error);
+    console.error(" Failed to start server:", error);
     process.exit(1);
   }
 };
@@ -80,18 +80,18 @@ start();
 
 // Graceful shutdown
 const gracefulShutdown = () => {
-  console.log("📉 Shutting down gracefully...");
+  console.log("Shutting down gracefully...");
 
   binanceService.disconnect();
 
   server.close(() => {
-    console.log("✅ Server closed");
+    console.log(" Server closed");
     process.exit(0);
   });
 
   // Force shutdown after 10 seconds
   setTimeout(() => {
-    console.error("⚠️ Forced shutdown after timeout");
+    console.error("Forced shutdown after timeout");
     process.exit(1);
   }, 10000);
 };

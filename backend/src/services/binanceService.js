@@ -22,12 +22,12 @@ class BinanceService extends EventEmitter {
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = RECONNECT_MAX_ATTEMPTS;
     this.pingInterval = null;
+    // console.log('BinanceService instance created');
   }
 
   initialize = async () => {
     try {
       await this.fetchRandomPairs();
-
       this.pairs.forEach((pair) => {
         this.medianTrackers.set(pair, new MedianTracker());
         this.latestPrices.set(pair, null);
@@ -36,10 +36,10 @@ class BinanceService extends EventEmitter {
       this.connectWebSocket();
 
       console.log(
-        `✅ BinanceService initialized with ${this.pairs.length} pairs`
+        `BinanceService initialized with ${this.pairs.length} pairs`
       );
     } catch (error) {
-      console.error("❌ Failed to initialize Binance service:", error);
+      console.error("Failed to initialize Binance service:", error);
       throw error;
     }
   };
@@ -47,7 +47,6 @@ class BinanceService extends EventEmitter {
   fetchRandomPairs = async () => {
     try {
       const { data } = await axios.get(`${BINANCE_API_URL}/exchangeInfo`);
-
       const symbols = data.symbols
         .filter(
           ({ status, quoteAsset }) =>
@@ -59,7 +58,7 @@ class BinanceService extends EventEmitter {
       this.pairs = shuffled.slice(0, ENV.MAX_PAIRS);
 
       console.log(
-        `📊 Selected ${this.pairs.length} trading pairs:`,
+        `Selected ${this.pairs.length} trading pairs:`,
         this.pairs
       );
     } catch (error) {
@@ -79,10 +78,9 @@ class BinanceService extends EventEmitter {
     this.ws.on("error", this.handleWsError);
     this.ws.on("close", this.handleWsClose);
     this.ws.on("pong", () => {
-      // Keep-alive pong received
+      // Keep-alive
     });
 
-    // Setup ping interval
     this.setupPingInterval();
   };
 
@@ -103,7 +101,7 @@ class BinanceService extends EventEmitter {
   };
 
   handleWsError = (error) => {
-    console.error("❌ WebSocket error:", error.message);
+    console.error(" WebSocket error:", error.message);
   };
 
   handleWsClose = () => {
@@ -128,17 +126,19 @@ class BinanceService extends EventEmitter {
   };
 
   processTrade = (trade) => {
+    // console.log("Processing trade data...");
     const symbol = trade.s.toLowerCase();
     const price = parseFloat(trade.p);
     const timestamp = new Date(trade.T);
+    // console.log(price)
+    // console.log("90909090")
+    // console.log(`Price for ${symbol}: ${price}`)
 
     if (this.medianTrackers.has(symbol)) {
-      // Add price to median tracker
       const tracker = this.medianTrackers.get(symbol);
       tracker.addPrice(price);
       this.latestPrices.set(symbol, price);
 
-      // Emit update event
       const median = tracker.getMedian();
       this.emit("medianUpdate", {
         pair: symbol,
@@ -156,14 +156,14 @@ class BinanceService extends EventEmitter {
       const delay = calculateExponentialBackoff(this.reconnectAttempts);
 
       console.log(
-        `🔄 Reconnecting in ${delay}ms... (Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`
+        `Reconnecting in ${delay}ms... (Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`
       );
-
+      // console.log("Retrying connection...");
       setTimeout(() => {
         this.connectWebSocket();
       }, delay);
     } else {
-      console.error("❌ Max reconnection attempts reached. Service stopped.");
+      console.error("Max reconnection attempts reached. Service stopped.");
       this.emit("maxReconnectReached");
     }
   };
@@ -171,6 +171,7 @@ class BinanceService extends EventEmitter {
   getMedian = (pair) => {
     const normalizedPair = pair.toLowerCase();
     const tracker = this.medianTrackers.get(normalizedPair);
+    // console.log('Getting median, ' + normalizedPair);
 
     if (!tracker) return null;
 
@@ -193,8 +194,7 @@ class BinanceService extends EventEmitter {
   };
 
   disconnect = () => {
-    console.log("🛑 Disconnecting BinanceService...");
-
+    console.log("Disconnecting BinanceService...");
     this.clearPingInterval();
 
     if (this.ws) {
@@ -208,3 +208,4 @@ class BinanceService extends EventEmitter {
 }
 
 export default BinanceService;
+
